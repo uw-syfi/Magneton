@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Magneton: Energy Profiler for ML Systems</title>
+    <meta name="description" content="Magneton is an energy profiler providing fine-grained, low-overhead energy attribution for ML workloads across Python, C/C++, and GPU layers." />
+
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:title" content="Magneton: Energy Profiler for ML Systems" />
+    <meta property="og:description" content="Fine-grained energy attribution for ML workloads with cross-layer tracing and accurate GPU power measurement." />
+    <meta property="og:type" content="website" />
+
+    <!-- Favicon (transparent/empty) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 0 0% 13%;
+            --muted: 0 0% 96%;
+            --muted-foreground: 0 0% 40%;
+            --primary: 142 76% 36%;
+            --primary-foreground: 0 0% 100%;
+            --accent: 142 76% 97%;
+            --accent-foreground: 142 76% 36%;
+            --card: 0 0% 100%;
+            --card-foreground: 0 0% 13%;
+            --border: 0 0% 90%;
+            --warning: 38 92% 50%;
+            --success: 142 76% 36%;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1152px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: hsl(var(--background) / 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid hsl(var(--border));
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 56px;
+        }
+
+        nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        nav a {
+            color: hsl(var(--muted-foreground));
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: hsl(var(--foreground));
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid hsl(var(--border));
+            color: hsl(var(--foreground));
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.25rem;
+        }
+
+        /* Sections */
+        section {
+            padding: 1.5rem 0;
+        }
+
+        @media (min-width: 768px) {
+            section {
+                padding: 2rem 0;
+            }
+        }
+
+        .section-border {
+            border-bottom: 1px solid hsl(var(--border));
+        }
+
+        .section-bg {
+            background: hsl(var(--muted) / 0.3);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            text-align: center;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        p {
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+        }
+
+        .hero-desc {
+            font-size: 1.25rem;
+            max-width: 56rem;
+            margin: 0 auto 3rem;
+            line-height: 1.75;
+        }
+
+        /* Cards */
+        .card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .grid-3 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .grid-2 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid-4 {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* Architecture Diagram */
+        .arch-diagram {
+            background: linear-gradient(135deg, hsl(var(--accent)), hsl(142 76% 95%));
+            border: 1px solid hsl(142 76% 85%);
+            border-radius: 0.5rem;
+            padding: 3rem 2rem;
+            margin: 3rem auto;
+            max-width: 56rem;
+        }
+
+        .arch-box {
+            background: hsl(var(--background) / 0.9);
+            backdrop-filter: blur(4px);
+            border: 1px solid hsl(var(--border));
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .arch-box:hover {
+            transform: translateY(-4px);
+        }
+
+        .arch-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: hsl(var(--primary) / 0.2);
+            color: hsl(var(--primary));
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.875rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid hsl(var(--border));
+        }
+
+        th {
+            font-weight: 600;
+            background: hsl(var(--muted));
+            color: hsl(var(--foreground));
+        }
+
+        tr:hover {
+            background: hsl(var(--muted) / 0.3);
+        }
+
+        .highlight-row {
+            background: hsl(var(--primary) / 0.1);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            padding: 2rem 0;
+            border-top: 1px solid hsl(var(--border));
+            text-align: center;
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        footer a {
+            color: hsl(var(--primary));
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* BibTeX */
+        .bibtex {
+            background: hsl(var(--muted));
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .flex-center {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .icon {
+            width: 2rem;
+            height: 2rem;
+            color: hsl(var(--primary));
+        }
+
+        /* Code blocks */
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: hsl(var(--muted));
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        /* Insights boxes */
+        .insight-box {
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+
+        .insight-box.warning {
+            background: hsl(var(--warning) / 0.1);
+            border-color: hsl(var(--warning));
+        }
+
+        .insight-box.success {
+            background: hsl(var(--success) / 0.1);
+            border-color: hsl(var(--success));
+        }
+
+        .insight-box h4 {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: hsl(var(--foreground));
+        }
+
+        /* Author links */
+        .authors {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0 2rem;
+        }
+
+        .authors a {
+            color: hsl(var(--primary));
+            text-decoration: none;
+            font-size: 1.25rem;
+        }
+
+        .authors a:hover {
+            text-decoration: underline;
+        }
+
+        .authors span {
+            color: hsl(var(--muted-foreground));
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <h1 style="font-size: 2rem; margin: 0;">Magneton</h1>
+            <nav>
+                <a href="#introduction">Overview</a>
+                <a href="#architecture">Architecture</a>
+                <a href="#results">Outputs</a>
+                <a href="#citation">Citation</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="section-border">
+        <div class="container hero">
+            <h1>
+                Magneton: Energy Profiler for<br />
+                Machine Learning Systems
+            </h1>
+
+            <p class="hero-desc">
+                Magneton is an energy profiler that provides fine-grained, accurate energy attribution for ML applications across Python, C/C++, and GPU layers. It correlates CPU-side launches with GPU execution and attributes power and energy to kernels, operators, and user annotations.
+            </p>
+
+            <div class="authors">
+                <a href="https://conless.dev/" target="_blank">Yi Pan</a><span>,</span>
+                <a href="https://wenboqian.github.io/" target="_blank">Wenbo Qian</a><span>,</span>
+                <a href="https://ddxxdd-code.github.io/" target="_blank">Dedong Xie</a><span>,</span>
+                <a href="/" target="_blank">Ruiyan Hu</a><span>,</span>
+                <a href="https://yigonghu.github.io/" target="_blank">Yigong Hu</a><span>,</span>
+                <a href="http://bariskasikci.org/" target="_blank">Baris Kasikci</a>
+            </div>
+
+            <div class="flex-center" style="padding-top: 1rem;">
+                <a href="https://arxiv.org/abs/2512.08365" target="_blank" class="btn btn-lg" style="background: #24292e; color: white; border: 1px solid #1b1f23;">
+                    📄 Read Paper
+                </a>
+                <a href="https://github.com/uw-syfi/Magneton" target="_blank" class="btn btn-lg" style="background: #24292e; color: white; border: 1px solid #1b1f23;">
+                    <svg style="width: 1.25rem; height: 1.25rem; fill: currentColor;" viewBox="0 0 16 16">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                    </svg>
+                    <span style="margin-left: 0.5rem;">GitHub</span>
+                </a>
+            </div>
+
+            <div class="flex-center" style="padding-top: 1rem;"></div>
+        </div>
+    </section>
+
+    <!-- Introduction -->
+    <section id="introduction">
+        <div class="container">
+            <h2>Why Energy Profiling for ML Is Hard</h2>
+
+            <div class="card">
+                <p style="font-size: 1.25rem; margin-bottom: 1.5rem;">Cross-layer ML applications combine Python, C/C++, and GPU execution with asynchronous scheduling—making traditional CPU-only profilers insufficient for accurate energy attribution.</p>
+
+                <div class="grid grid-2">
+                    <div>
+                        <h3>🔄 Asynchronous GPU Execution</h3>
+                        <p>The GPU programming model decouples CPU-side launches from GPU execution, creating temporal gaps that complicate energy attribution.</p>
+                    </div>
+                    <div>
+                        <h3>🧩 Cross-Layer Context</h3>
+                        <p>Python, native runtimes, and GPU layers require different tracing mechanisms that must be combined into one causal execution trace.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Magneton: Cross-Layer Energy Profiling</h3>
+                <p>Magneton correlates CPU calls, framework operators, and GPU activities into a unified timeline and attributes accurate energy to kernels, operators, and user annotations with low overhead.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why It Matters -->
+    <section>
+        <div class="container">
+            <h2>Why It Matters</h2>
+
+            <div class="card">
+                <p style="font-size: 1.25rem; margin-bottom: 2rem; text-align: center;">Reliable energy attribution unlocks principled optimization for ML systems—from kernel design to operator graphs and application-level choices.</p>
+
+                <div class="grid grid-3">
+                    <div style="text-align: center; padding: 1rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 0.5rem;">Model Developers</h4>
+                        <p style="font-size: 0.875rem;">Attribute energy to kernels/operators to guide targeted optimizations.</p>
+                    </div>
+
+                    <div style="text-align: center; padding: 1rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 0.5rem;">System Designers</h4>
+                        <p style="font-size: 0.875rem;">Evaluate runtime policies with energy-aware telemetry and causal traces.</p>
+                    </div>
+
+                    <div style="text-align: center; padding: 1rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 0.5rem;">Device Manufacturers</h4>
+                        <p style="font-size: 0.875rem;">Understand power behavior and thermal constraints under real workloads.</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; padding: 1.5rem; background: hsl(var(--primary) / 0.1); border-radius: 0.5rem; border: 1px solid hsl(var(--primary) / 0.2);">
+                    <p style="font-size: 1.25rem; font-weight: 500; text-align: center; margin: 0;">
+                        Magneton makes energy a first-class metric—enabling efficient, fair, and sustainable ML deployment.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture -->
+    <section id="architecture" class="section-bg">
+        <div class="container">
+            <h2>Profiling Architecture</h2>
+
+            <p class="text-center" style="max-width: 56rem; margin: 0 auto 2rem; font-size: 1.25rem;">
+                Magneton builds a unified, causal execution trace across Python, native runtimes, and GPU execution to enable accurate energy attribution.
+            </p>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3>GPU Events Tracing</h3>
+                    <p style="font-size: 1rem;">
+                        Magneton captures low-level GPU activities (kernel execution, memory copies) using the CUPTI Activity API. Activity tracing collects detailed timestamps with minimal runtime overhead by leveraging hardware counters and timeline information.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>Framework & Runtime Interception</h3>
+                    <p style="font-size: 1rem;">
+                        At the framework level, Magneton hooks into deep learning operators (e.g., PyTorch via TorchDynamo). Simultaneously, it intercepts CUDA runtime calls (kernel launches, allocations, transfers) using the CUPTI Callback API to connect high-level ops with low-level GPU APIs.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>Call Stacks & Python Tracing</h3>
+                    <p style="font-size: 1rem;">
+                        Magneton records native call stacks at kernel launch sites (via <code>libunwind</code>) and Python function entry/exit (via CPython <code>PyEval_SetProfile</code>) to provide full-context attribution from Python code to GPU execution.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>Synchronization & Correlation</h3>
+                    <p style="font-size: 1rem;">
+                        Using CUPTI correlation IDs, CPU-side API calls and their resulting GPU activities share the same ID, enabling a unified trace that faithfully reflects causality from CPU scheduling to GPU execution.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 2rem;">
+                <h3>Energy Measurement and Attribution</h3>
+                <p style="font-size: 1rem; margin-bottom: 1rem;">
+                    NVML power readings are coarse (20–30 ms updates) and delayed, making runtime per-kernel energy inaccurate. Magneton addresses this with two complementary options: a direct power meter for precise timestamps, or offline NVML-based kernel replay (30–50 iterations) that achieves stable per-kernel estimates with <strong>&lt; 5% error</strong>.
+                </p>
+                <div class="grid grid-2">
+                    <div>
+                        <h4>Direct Power Meter</h4>
+                        <p style="font-size: 1rem;">
+                            When available, a power meter provides microsecond-scale, accurate GPU power readings with precise timestamps, enabling high-fidelity per-kernel energy attribution.
+                        </p>
+                    </div>
+                    <div>
+                        <h4>NVML with Kernel Replay</h4>
+                        <p style="font-size: 1rem;">
+                            NVML power readings update every 20–30 ms and lag real activity, making per-kernel measurement inaccurate at runtime. Magneton mitigates this by replaying captured dataflow nodes offline (30–50 iterations) and averaging NVML readings to estimate stable per-kernel power with <strong>&lt; 5% error</strong> per our measurements.
+                        </p>
+                    </div>
+                </div>
+                <div class="insight-box success" style="margin-top: 1rem;">
+                    <h4>Design Note</h4>
+                    <p style="margin: 0;">Replay runs are executed offline to avoid production overhead and prevent cache pollution; profiling remains transparent to users, maintains accuracy, and requires no source changes to production code.</p>
+                </div>
+            </div>
+            </div>
+    </section>
+
+    <!-- Outputs -->
+    <section id="results">
+        <div class="container">
+            <h2>Profiler Outputs</h2>
+
+            <div class="card">
+                <h3>What Magneton Produces</h3>
+                <ul style="margin-left: 1.5rem; color: hsl(var(--muted-foreground)); font-size: 1rem;">
+                    <li style="margin-bottom: 0.5rem;"><strong>Per-kernel energy:</strong> energy and average power per GPU kernel</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Operator-level attribution:</strong> energy attributed to DL operators</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Request-level aggregation:</strong> energy per user request / pipeline stage</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Unified timeline:</strong> correlated CPU, framework, and GPU events</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Dataflow graph capture:</strong> nodes used for offline replay</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Export:</strong> JSON/CSV summaries and trace for visualization</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    
+
+    <!-- Feedback -->
+    <section class="section-bg">
+        <div class="container">
+            <h2>Get Involved</h2>
+
+            <div class="card" style="max-width: 48rem; margin: 0 auto;">
+                <h3 style="text-align: center; margin-bottom: 1.5rem;">We Welcome Feedback</h3>
+
+                <p style="text-align: center; margin-bottom: 2rem;">Suggestions and use-cases help prioritize features and device support. Please reach out to share your needs.</p>
+
+                <div class="grid grid-3">
+                    <div style="text-align: center; padding: 1rem;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">➕</div>
+                        <h4 style="font-size: 0.875rem; font-weight: 600;">New Framework Hooks</h4>
+                    </div>
+
+                    <div style="text-align: center; padding: 1rem;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔄</div>
+                        <h4 style="font-size: 0.875rem; font-weight: 600;">Replay Improvements</h4>
+                    </div>
+
+                    <div style="text-align: center; padding: 1rem;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🖥️</div>
+                        <h4 style="font-size: 0.875rem; font-weight: 600;">Broader GPU Support</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Citation -->
+    <section id="citation">
+        <div class="container">
+            <h2>Citation</h2>
+
+            <div class="card" style="max-width: 48rem; margin: 0 auto;">
+                <p style="font-size: 1.125rem; margin-bottom: 0.75rem; text-align: center;">
+                    This work is currently unpublished. A preprint is forthcoming.
+                </p>
+                <div class="bibtex" id="bibtex">@article{pan2025magneton,
+  title={Magneton: Optimizing Energy Efficiency of ML Systems via Differential Energy Debugging},
+  author={Pan, Yi and Qian, Wenbo and Xie, Dedong and Hu, Ruiyan and Hu, Yigong and Kasikci, Baris},
+  journal={arXiv preprint arXiv:2512.08365},
+  year={2025}
+}</div>
+                <div style="display: flex; justify-content: center; margin-top: 0.75rem;">
+                    <button class="btn btn-outline" onclick="copyBibtex()">📋 Copy</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>Magneton: Energy Profiler for ML Systems</p>
+            <p style="margin-top: 0.5rem; font-size: 0.875rem;">Unpublished work. Preprint forthcoming.</p>
+        </div>
+    </footer>
+
+    <script>
+        function copyBibtex() {
+            const bibtex = document.getElementById('bibtex').textContent;
+            navigator.clipboard.writeText(bibtex).then(() => {
+                alert('BibTeX copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
