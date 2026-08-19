@@ -1,0 +1,10 @@
+[package]
+name = "eprof-storage"
+version = "0.1.0"
+edition = "2021"
+description = "Where a run accumulates: the event array, and the tree built over it."
+license = "MIT"
+
+[lib]
+name = "eprof_storage"
+path = "src/lib.rs"

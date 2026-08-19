@@ -1,0 +1,82 @@
+64-bit enabled: True
+Device: TFRT_CPU_0
+JAX version: 0.6.2
+
+Testing matrices with different L1 norms to trigger different Pade orders:
+================================================================================
+
+Pade-3 test:
+  Target L1 norm: 0.005
+  Actual L1 norm: 0.005000
+  Threshold: 0.014956
+  Expected Pade order: 3
+  Before (all Pade): 2.984 ms
+  After (single Pade): 1.136 ms
+  Speedup: 2.63x
+  Max difference: 0.00e+00
+
+Pade-5 test:
+  Target L1 norm: 0.100
+  Actual L1 norm: 0.100000
+  Threshold: 0.253940
+  Expected Pade order: 5
+  Before (all Pade): 2.946 ms
+  After (single Pade): 1.324 ms
+  Speedup: 2.23x
+  Max difference: 1.08e-19
+
+Pade-7 test:
+  Target L1 norm: 0.600
+  Actual L1 norm: 0.600000
+  Threshold: 0.950418
+  Expected Pade order: 7
+  Before (all Pade): 3.204 ms
+  After (single Pade): 1.521 ms
+  Speedup: 2.11x
+  Max difference: 0.00e+00
+
+Pade-9 test:
+  Target L1 norm: 1.500
+  Actual L1 norm: 1.500000
+  Threshold: 2.097848
+  Expected Pade order: 9
+  Before (all Pade): 3.688 ms
+  After (single Pade): 2.026 ms
+  Speedup: 1.82x
+  Max difference: 0.00e+00
+
+Pade-13 test:
+  Target L1 norm: 10.000
+  Actual L1 norm: 10.000000
+  Expected Pade order: 13
+  Before (all Pade): 3.663 ms
+  After (single Pade): 2.342 ms
+  Speedup: 1.56x
+  Max difference: 0.00e+00
+
+================================================================================
+SUMMARY
+================================================================================
+  Pade |    L1 Norm | Before (ms) | After (ms) |  Speedup
+------------------------------------------------------------
+     3 |      0.005 |       2.984 |      1.136 |     2.63x
+     5 |      0.100 |       2.946 |      1.324 |     2.23x
+     7 |      0.600 |       3.204 |      1.521 |     2.11x
+     9 |      1.500 |       3.688 |      2.026 |     1.82x
+    13 |     10.000 |       3.663 |      2.342 |     1.56x
+------------------------------------------------------------
+Average speedup: 2.07x
+
+================================================================================
+ANALYSIS
+================================================================================
+Expected behavior:
+- For lower Pade orders (3,5,7,9): Larger speedup expected
+- For Pade-13: Minimal speedup (both versions do similar work)
+
+Actual results show the optimization effect varies by Pade order used.
+
+================================================================================
+To test on CPU (where original issue was found), run:
+CUDA_VISIBLE_DEVICES='' JAX_PLATFORMS=cpu python test_expm_varied_norms.py
+================================================================================

@@ -1,0 +1,291 @@
+# Which environment each example needs, and what it should produce.
+#
+# The examples exercise frameworks whose pins are mutually exclusive, so they
+# cannot share one environment:
+#
+#   - vllm 0.9.1 requires torch==2.7.0 exactly.
+#   - transformers newer than 4.51.3 builds a DynamicCache in GPT-2's forward
+#     that torch 2.7's dynamo cannot trace, so the HF examples are pinned to
+#     both together.
+#   - tensorflow brings its own CUDA stack.
+#
+# Everything not held back by one of those runs on torch 2.8.
+#
+# eprof is built once per environment and cannot be shared between them: the
+# extension links the libtorch that will import it. `scripts/ae.py` does that
+# build; nothing here is installed by hand.
+#
+# `produces` is what the example writes. The runner requires every one of them
+# to appear, to parse, and -- for a chrome trace -- to carry events, because an
+# example that fails silently still exits 0. Paths are relative to `dir`.
+
+[env.base]
+description = "PyTorch only. The largest group, and the one that needs nothing special."
+python = "3.10"
+requires = ["torch==2.8.0", "numpy", "einops"]
+
+[env.hf]
+description = "Hugging Face transformers. Held at torch 2.7 by the dynamo/DynamicCache incompatibility above."
+python = "3.10"
+requires = ["torch==2.7.0", "transformers==4.51.3", "numpy", "accelerate"]
+
+[env.vllm]
+description = "vLLM, which pins torch==2.7.0 itself."
+python = "3.10"
+# transformers is pinned alongside: vllm 0.9.1 registers model configurations of
+# its own, and transformers 4.54+ already defines some of them ("'aimv2' is
+# already used by a Transformers config"), which fails at import.
+requires = [
+    "vllm==0.9.1",
+    "transformers==4.51.3",
+    # vllm-9471 is about the FlashInfer attention backend, and sets
+    # VLLM_ATTENTION_BACKEND=FLASHINFER, so the backend has to be there.
+    "flashinfer-python",
+]
+
+[env.megatron]
+description = "Megatron-LM core. On torch 2.7: 2.8's dynamo refuses to inline the contextlib manager Megatron's forward uses."
+python = "3.10"
+requires = ["torch==2.7.0", "megatron-core==0.12.0", "numpy"]
+
+[env.tf]
+description = "TensorFlow. Still needs torch, because the example profiles TF work through eprof."
+python = "3.10"
+requires = ["torch==2.8.0", "tensorflow==2.20.0", "numpy"]
+
+[env.jax]
+description = "JAX. Needs torch as well: the eprof extension links libtorch, so anything that loads it loads torch too."
+python = "3.10"
+requires = ["torch==2.8.0", "jax[cuda12]==0.5.0", "numpy", "flax", "transformers==4.51.3"]
+
+[env.diffusers]
+description = "Hugging Face diffusers, from the commit the artifact was written against."
+python = "3.10"
+requires = [
+    "torch==2.8.0",
+    "diffusers @ git+https://github.com/huggingface/diffusers.git@0454fbb",
+    "transformers==4.51.3",
+    "numpy",
+    "accelerate",
+]
+
+# --- The examples ------------------------------------------------------------
+# `dir` is relative to examples/. `script` runs with that as its cwd, which is
+# where its output lands.
+
+[[example]]
+name = "pytorch-141210"
+env = "base"
+dir = "artifacts/pytorch-141210"
+script = "main.py"
+produces = ["trace_fused.json", "trace_separate.json"]
+about = "A fused addmm against a separate matmul plus add."
+
+[[example]]
+name = "pytorch-141210-up-proj"
+env = "base"
+dir = "artifacts/pytorch-141210"
+script = "main_up_proj.py"
+produces = ["trace_up_proj_fused.json", "trace_up_proj_separate.json"]
+about = "The same comparison at an MLP up-projection's shape."
+
+[[example]]
+name = "pytorch-141822"
+env = "base"
+dir = "artifacts/pytorch-141822"
+script = "main.py"
+produces = ["trace_original.json", "trace_new.json"]
+about = "Two cross-entropy implementations, one op against seven."
+
+[[example]]
+name = "pytorch-153195"
+env = "base"
+dir = "artifacts/pytorch-153195"
+script = "main.py"
+produces = ["allow_tf32.json", "disable_tf32.json"]
+about = "What TF32 costs and saves."
+
+[[example]]
+name = "pytorch-181115"
+env = "base"
+dir = "artifacts/pytorch-181115"
+script = "main.py"
+produces = ["normal.json", "uneven.json"]
+about = "Uneven work across ranks, and the power it wastes."
+
+[[example]]
+name = "pytorch-28224"
+env = "base"
+dir = "artifacts/pytorch-28224"
+script = "main.py"
+produces = ["trace_block.json", "trace_auto.json"]
+about = "Busy-waiting against blocking synchronization. No model: this profiles a plain block."
+
+[[example]]
+name = "pytorch-76012"
+env = "base"
+dir = "artifacts/pytorch-76012"
+script = "main.py"
+produces = ["trace_pytorch.json", "trace_custom.json"]
+about = "A channels-first layer norm against the built-in."
+
+[[example]]
+name = "hf-34570"
+env = "base"
+dir = "artifacts/hf-34570"
+script = "main.py"
+produces = ["comparison.json", "trace_eigvals.json", "trace_eigvalsh.json"]
+about = "eigvals against eigvalsh on a symmetric matrix: 108x the latency for less GPU energy."
+
+[[example]]
+name = "sd-279"
+env = "base"
+dir = "artifacts/sd-279"
+script = "main.py"
+produces = ["trace.json", "trace_tf32.json"]
+about = "A Stable Diffusion 3 attention block, as its reference implementation writes it."
+
+[[example]]
+name = "dataflow-addmm"
+env = "base"
+dir = "dataflow"
+script = "addmm_fused_vs_separate.py"
+produces = [
+    "trace_fused.json",
+    "trace_separate.json",
+    "dataflow_fused.json",
+    "dataflow_separate.json",
+]
+about = "The dataflow DAG recorder: same comparison, but capturing every tensor."
+
+[[example]]
+name = "pytorch-181115-gpt"
+env = "hf"
+dir = "artifacts/pytorch-181115"
+script = "main_gpt.py"
+produces = ["normal_gpt.json", "uneven_gpt.json"]
+about = "The same rank imbalance, on GPT-2."
+
+[[example]]
+name = "pytorch-141210-hf"
+env = "hf"
+dir = "artifacts/pytorch-141210"
+script = "main_hf.py"
+produces = ["trace.json"]
+about = "The addmm comparison inside a real transformer."
+
+[[example]]
+name = "hf-14450"
+env = "hf"
+dir = "artifacts/hf-14450"
+script = "main.py"
+produces = ["trace.json", "trace_tf32.json"]
+about = "A transformer's matmuls with and without TF32."
+
+[[example]]
+name = "vllm-9471"
+env = "vllm"
+dir = "artifacts/vllm-9471"
+script = "main.py"
+# Named for VLLM_FLASHINFER_FORCE_TENSOR_CORES, which is what the example
+# varies; unset means 0.
+produces = ["trace_0.json"]
+about = "vLLM with the FlashInfer attention backend."
+
+[[example]]
+name = "vllm-10811"
+env = "vllm"
+dir = "artifacts/vllm-10811"
+script = "main.py"
+produces = ["trace.json"]
+about = "vLLM inference, a second issue."
+
+[[example]]
+name = "dataflow-vllm-vs-hf"
+env = "vllm"
+dir = "dataflow"
+script = "vllm_vs_hf.py"
+produces = ["trace_vllm.json", "trace_hf.json", "dataflow_vllm.json", "dataflow_hf.json"]
+about = "The same prompt through vLLM and through transformers, compared tensor by tensor."
+
+[[example]]
+name = "megatron-543"
+env = "megatron"
+dir = "artifacts/megatron-543"
+script = "main.py"
+produces = ["trace.json", "per_op.json"]
+about = "Megatron-LM's GPT decoder, per operation. 25.5 mJ a step, three quarters of it matmul."
+
+[[example]]
+name = "jax-5647"
+env = "jax"
+dir = "artifacts/jax-5647"
+script = "main.py"
+produces = ["energy.json", "expm_before_fix.mlir", "expm_after_fix.mlir"]
+about = "expm computed every Pade approximant and discarded four of them. What that cost in energy, per operation."
+
+[[example]]
+name = "jax-29875"
+env = "jax"
+dir = "artifacts/jax-29875"
+script = "main.py"
+produces = ["energy.json"]
+about = "A depthwise conv1d costs 3x the GPU time and 3x the energy in JAX that it does in torch."
+
+[[example]]
+name = "jax-28614"
+env = "jax"
+dir = "artifacts/jax-28614"
+script = "main.py"
+produces = ["energy.json"]
+about = "A batched STFT spends 96% of its energy on a convolution, 1% on the transform."
+
+[[example]]
+name = "tf-60772"
+env = "tf"
+dir = "artifacts/tf-60772"
+script = "main.py"
+produces = ["trace.json", "comparison.json"]
+about = "count_nonzero against a manual cast and sum, recorded and matched as graphs."
+
+[[example]]
+name = "diffusers-12131"
+env = "diffusers"
+dir = "artifacts/diffusers-12131"
+script = "main.py"
+produces = ["trace.json"]
+about = "A diffusers pipeline."
+
+# --- Post-processing ---------------------------------------------------------
+# These read what an example above wrote, so they declare what they need.
+
+[[example]]
+name = "pytorch-181115-plot"
+env = "base"
+dir = "artifacts/pytorch-181115"
+script = "plot.py"
+needs = ["pytorch-181115"]
+requires = ["matplotlib"]
+produces = ["normal.png", "uneven.png"]
+about = "Plots the power series of the two runs against each other."
+
+[[example]]
+name = "pytorch-181115-study"
+env = "hf"
+dir = "artifacts/pytorch-181115"
+script = "make_study_gpt.py"
+needs = ["pytorch-181115-gpt"]
+requires = ["pandas", "numpy"]
+produces = ["study_gpt.csv"]
+about = "Resamples the GPT-2 power series onto a common grid."
+
+[[example]]
+name = "pytorch-181115-plot-gpt"
+env = "hf"
+dir = "artifacts/pytorch-181115"
+script = "plot_gpt.py"
+args = ["-i", "study_gpt.csv", "-o", "study_gpt.png"]
+needs = ["pytorch-181115-study"]
+requires = ["matplotlib", "pandas"]
+produces = ["study_gpt.png"]
+about = "Plots that series."

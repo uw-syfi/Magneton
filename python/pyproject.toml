@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "magneton"
+version = "0.1.0"
+description = "Find what two runs of a computation have in common, and what the difference cost"
+# No readme= : the project one is at the repository root, outside this
+# directory, and a build backend will not reach up out of the package.
+authors = [{ name = "Yi Pan", email = "conlesspan@outlook.com" }]
+# Pure python, and deliberately so. Recording a dataflow graph, matching two of
+# them, and timing with CUDA events all need nothing but torch -- no CUPTI, no
+# NVML, no compiler, and no build step for this package at all.
+dependencies = [
+    "torch>=2.8.0",
+    "numpy",
+]
+# Declared in setup.py, not here. The `energy` extra can come from a published
+# wheel or from lib/eprof in this checkout, and EPROF_USE_PREBUILT chooses --
+# which a static table cannot express.
+dynamic = ["optional-dependencies"]
+
+# Found rather than listed. A hand-written list silently dropped the
+# subpackages -- matching, backends, eprof, utils -- from every wheel built.
+[tool.setuptools.packages.find]
+include = ["magneton*"]
+
+[tool.yapf]
+continuation_indent_width = 4
+dedent_closing_brackets = true
+
+[tool.uv]
+no-build-isolation-package = ["magneton-eprof"]

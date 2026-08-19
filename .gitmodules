@@ -1,0 +1,12 @@
+[submodule "third_party/googletest"]
+	path = third_party/googletest
+	url = https://github.com/google/googletest
+[submodule "third_party/dynolog"]
+	path = third_party/dynolog
+	url = https://github.com/facebookincubator/dynolog.git
+[submodule "third_party/fmt"]
+	path = third_party/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "third_party/vllm"]
+	path = third_party/vllm
+	url = https://github.com/Conless/vllm

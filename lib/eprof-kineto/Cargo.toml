@@ -1,0 +1,18 @@
+[package]
+name = "eprof-kineto"
+version = "0.1.0"
+edition = "2021"
+# Lets dependent build scripts read `cargo:root` as DEP_KINETO_ROOT.
+links = "kineto"
+description = "Driving libkineto: the vendored library, its C ABI, and the Rust that uses it."
+license = "MIT"
+
+[lib]
+name = "eprof_kineto"
+path = "src/lib.rs"
+
+[dependencies]
+eprof-storage = { path = "../eprof-storage" }
+
+[build-dependencies]
+eprof-utils = { path = "../eprof-utils" }

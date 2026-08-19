@@ -1,0 +1,18 @@
+[package]
+name = "eprof-energy"
+version = "0.1.0"
+edition = "2021"
+description = "The GPU power sampler: an NVML polling thread, and nothing else."
+license = "MIT"
+
+[lib]
+name = "eprof_energy"
+path = "src/lib.rs"
+
+# Checks the NVML path against real GPUs, independent of the profiler.
+[[bin]]
+name = "eprof-probe"
+path = "src/bin/probe.rs"
+
+[dependencies]
+nvml-wrapper = "0.10"

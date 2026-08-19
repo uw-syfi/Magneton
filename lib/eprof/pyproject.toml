@@ -1,0 +1,26 @@
+[build-system]
+requires = ["maturin>=1.0", "cmake>=3.25.2", "ninja"]
+build-backend = "maturin"
+
+[project]
+# Three names for one thing, and they are allowed to differ:
+#   this directory   lib/eprof
+#   distribution     magneton-eprof   (what pip installs)
+#   import           magneton_eprof   (what magneton.eprof imports)
+# Both names are prefixed on purpose. A distribution name is unique because
+# PyPI enforces it; a module name is not enforced by anything, and a short one
+# like `libeprof` would be a global name this project cannot reserve -- two
+# distributions shipping the same top-level module overwrite each other's
+# files in site-packages.
+name = "magneton-eprof"
+version = "0.1.0"
+description = "The Rust and C++ half of magneton: libkineto, CUPTI and NVML behind a python module"
+requires-python = ">=3.10"
+# torch is deliberately absent. The extension links the libtorch that will
+# import it, so it must be built against one that is already installed; naming
+# it here would let a resolver fetch a second, different one.
+
+[tool.maturin]
+# maturin would otherwise derive this from the crate, which is named for the
+# directory rather than for what it installs as.
+module-name = "magneton_eprof"

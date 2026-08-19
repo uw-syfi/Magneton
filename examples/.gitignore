@@ -1,0 +1,4 @@
+**/*.json
+**/*.png
+# tensor payloads the dataflow examples save beside their JSON
+**/*.pt

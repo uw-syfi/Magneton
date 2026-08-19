@@ -1,0 +1,13 @@
+[package]
+name = "eprof-utils"
+version = "0.1.0"
+edition = "2021"
+description = "How the C++ halves are compiled: what to ask the environment, and with which flags."
+license = "MIT"
+
+[lib]
+name = "eprof_utils"
+path = "src/lib.rs"
+
+[dependencies]
+cc = "1.0"

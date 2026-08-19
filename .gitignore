@@ -1,0 +1,27 @@
+# VS Code
+.cache/
+.vscode/
+
+# Built and cached files
+build/
+rust/target/
+**/target/
+.venv/
+**/__pycache__/
+**/*.egg-info/
+**/*.so
+**/*_cache
+**/*.lock
+
+# Temporary files
+playground/
+
+# setuptools' staging area for `pip install ./python`
+/python/build/
+/python/*.egg-info/
+
+# scripts/ae.py's environments, logs and results
+/.ae/
+
+# the JAX issue artifacts were imported from here
+/eprof_jax_issues-*.zip
