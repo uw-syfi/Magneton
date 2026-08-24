@@ -1,0 +1,6 @@
+**/*.json
+**/*.png
+# tensor payloads the dataflow examples save beside their JSON
+**/*.pt
+# and the one example that hands a table to the next one rather than a plot
+**/*.csv

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "magneton"
+version = "0.1.0"
+description = "Find what two runs of a computation have in common, and what the difference cost"
+# The project readme is at the repository root, outside this directory, so it
+# is not declared here.
+authors = [{ name = "Yi Pan", email = "conlesspan@outlook.com" }]
+# Pure python: recording, matching and CUDA-event timing need nothing but torch.
+dependencies = [
+    # The supported range. Outside it the energy extension cannot link a CUPTI
+    # it can drive: torch 2.7 to 2.10 depend on the `nvidia-cuda-cupti` wheel,
+    # and later versions do not.
+    "torch>=2.7,<2.11",
+    "numpy",
+]
+# Declared in setup.py: the `energy` extra resolves differently depending on
+# EPROF_USE_PREBUILT, which a static table cannot express.
+dynamic = ["optional-dependencies"]
+
+[tool.setuptools.packages.find]
+include = ["magneton*"]
+
+[tool.yapf]
+continuation_indent_width = 4
+dedent_closing_brackets = true
+
+[tool.uv]
+no-build-isolation-package = ["magneton-eprof"]

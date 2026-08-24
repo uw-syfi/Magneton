@@ -1,0 +1,69 @@
+---
+# Enabled families, then the individual checks turned back off. Each exclusion
+# is here because the check disagrees with a decision this codebase has already
+# made -- not because the warning was noisy.
+Checks: '
+        bugprone-*,
+        clang-analyzer-*,
+        google-*,
+        modernize-*,
+        performance-*,
+        portability-*,
+        readability-*,
+
+        -modernize-deprecated-headers,
+        -modernize-use-trailing-return-type,
+        -modernize-use-using,
+        -readability-identifier-length,
+        -readability-braces-around-statements,
+        -google-readability-braces-around-statements,
+        -readability-function-cognitive-complexity,
+        -readability-magic-numbers,
+        -bugprone-easily-swappable-parameters,
+        '
+# Why each is off:
+#
+#   modernize-deprecated-headers      lib/*/include/*.h and
+#   modernize-use-using               libkineto/include/kineto_c_api.h are C
+#                                     ABIs. <stdint.h> and `typedef struct` are
+#                                     what C has; <cstdint> and `using` are not
+#                                     available to a C consumer.
+#
+#   modernize-use-trailing-return-type
+#                                     the codebase writes `std::string f()`.
+#                                     Both spellings appear, and converting
+#                                     every declaration to satisfy the check
+#                                     would be a large diff for no reader.
+#
+#   readability-identifier-length     a C ABI takes handles and indices; `h`
+#                                     and `i` are the clearest names they have.
+#
+#   readability-braces-around-statements, google-readability-...
+#                                     .clang-format governs layout here.
+#
+#   readability-function-cognitive-complexity
+#                                     the RecordFunction and CPython callbacks
+#                                     are long because the APIs they wrap are.
+#                                     Splitting them for a metric would move
+#                                     the complexity, not remove it.
+#
+#   readability-magic-numbers         the event tags, activity types and
+#                                     c10::DeviceType values are ABI constants
+#                                     mirrored from headers on the other side;
+#                                     they are named where naming helps.
+#
+#   bugprone-easily-swappable-parameters
+#                                     fires on every C ABI entry point, whose
+#                                     signature is fixed by the header.
+CheckOptions:
+  - { key: readability-identifier-naming.ClassCase,           value: CamelCase  }
+  - { key: readability-identifier-naming.EnumCase,            value: CamelCase  }
+  - { key: readability-identifier-naming.FunctionCase,        value: CamelCase  }
+  - { key: readability-identifier-naming.GlobalConstantCase,  value: UPPER_CASE }
+  - { key: readability-identifier-naming.ConstantCase,        value: UPPER_CASE }
+  - { key: readability-identifier-naming.MemberCase,          value: lower_case }
+  - { key: readability-identifier-naming.MemberSuffix,        value: _          }
+  - { key: readability-identifier-naming.NamespaceCase,       value: lower_case }
+  - { key: readability-identifier-naming.StructCase,          value: CamelCase  }
+  - { key: readability-identifier-naming.UnionCase,           value: CamelCase  }
+  - { key: readability-identifier-naming.VariableCase,        value: lower_case }

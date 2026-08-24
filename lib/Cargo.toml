@@ -1,0 +1,28 @@
+# One workspace, one crate per subsystem, and each crate holds BOTH halves of
+# its subsystem: the C++ that reads a libtorch/CPython/libkineto type, and the
+# Rust that everything else about it lives in. Splitting by language instead
+# would put the two sides of every boundary as far apart as the tree allows.
+#
+# Dependencies run one way:
+#
+#   eprof-utils    how the C++ halves are compiled.      A build dep only.
+#   eprof-storage  where a run accumulates.                       No deps.
+#   eprof-energy   the NVML sampler.                              No deps.
+#   eprof-kineto   libkineto + driving it.                -> eprof-storage
+#   eprof-python   the CPython tracer + its caches.       -> eprof-storage
+#   eprof-torch    the RecordFunction callbacks.  -> eprof-storage, -kineto
+#   eprof          the run, attribution, the python module.          -> all
+#
+# `eprof-storage` is a crate rather than a module of `eprof` because all three
+# subsystems write into the array. If it lived with the code that drives them,
+# the dependency would run both ways -- which modules may do and crates may not.
+# It holds only what is genuinely shared: anything one subsystem alone uses
+# belongs to that subsystem.
+[workspace]
+resolver = "2"
+members = ["eprof-utils", "eprof-storage", "eprof-energy", "eprof-kineto", "eprof-python", "eprof-torch", "eprof"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"

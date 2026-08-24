@@ -1,0 +1,17 @@
+[package]
+name = "eprof-torch"
+version = "0.1.0"
+edition = "2021"
+description = "The RecordFunction callbacks, and the per-thread stores they write into."
+license = "MIT"
+
+[lib]
+name = "eprof_torch"
+path = "src/lib.rs"
+
+[dependencies]
+eprof-storage = { path = "../eprof-storage" }
+eprof-kineto = { path = "../eprof-kineto" }
+
+[build-dependencies]
+eprof-utils = { path = "../eprof-utils" }

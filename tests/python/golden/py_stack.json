@@ -1,0 +1,32 @@
+{
+  "mode": "loose",
+  "n_nodes": 93,
+  "schema": [
+    "activity_type",
+    "correlation_id",
+    "device",
+    "device_index",
+    "device_type",
+    "dur_ns",
+    "flow_id",
+    "flow_start",
+    "flow_type",
+    "forward_tid",
+    "id",
+    "linked_correlation",
+    "linked_id",
+    "name",
+    "parent_id",
+    "power_usage",
+    "resource",
+    "start_ns",
+    "start_tid",
+    "tag"
+  ],
+  "tags": [
+    0,
+    4,
+    5,
+    6
+  ]
+}

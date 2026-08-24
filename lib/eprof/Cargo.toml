@@ -1,0 +1,32 @@
+[package]
+name = "eprof"
+version = "0.1.0"
+edition = "2021"
+description = "The profiler: the run, the post-processing over it, and the python module it is reached through."
+
+[lib]
+name = "magneton_eprof"
+crate-type = ["cdylib"]
+# No test harness: this is an extension module, so the harness binary would
+# need a python interpreter and the C++ archives to even start. `cargo test`
+# at the workspace root would otherwise fail here with a bare exit 127.
+test = false
+
+[dependencies]
+eprof-storage = { path = "../eprof-storage" }
+eprof-energy = { path = "../eprof-energy" }
+eprof-kineto = { path = "../eprof-kineto" }
+eprof-python = { path = "../eprof-python" }
+eprof-torch = { path = "../eprof-torch" }
+pyo3 = { version = "0.22", features = ["extension-module", "abi3-py310"] }
+
+[build-dependencies]
+eprof-utils = { path = "../eprof-utils" }
+
+[package.metadata.maturin]
+# Ship the stub and the PEP 561 marker beside the module, which is where a type
+# checker looks for them.
+include = [
+    { path = "magneton_eprof.pyi", format = "wheel" },
+    { path = "py.typed", format = "wheel" },
+]

@@ -1,0 +1,16 @@
+[package]
+name = "eprof-python"
+version = "0.1.0"
+edition = "2021"
+description = "The CPython tracer: the C++ that talks to CPython, and the caches and replay it feeds."
+license = "MIT"
+
+[lib]
+name = "eprof_python"
+path = "src/lib.rs"
+
+[dependencies]
+eprof-storage = { path = "../eprof-storage" }
+
+[build-dependencies]
+eprof-utils = { path = "../eprof-utils" }

@@ -1,0 +1,78 @@
+# clangd configuration.
+#
+# There is deliberately no compile_commands.json here: it would only exist
+# after a build, and would point at whichever directory that build used. Every
+# flag clangd needs is below instead, so opening any file in a fresh checkout
+# works.
+#
+# Two things about how clangd reads this file, both found the hard way:
+#   - `PathMatch` is matched against the path RELATIVE TO THIS FILE, so the
+#     patterns start at `src/`, not `.*/src/`.
+#   - include paths in `Add` resolve against the DIRECTORY OF THE FILE BEING
+#     EDITED, not against this file. Hence the `../` prefixes, and one fragment
+#     per directory depth.
+#
+# Which clang-tidy checks run is .clang-tidy's business, not this file's.
+
+CompileFlags:
+  Add:
+    - -std=gnu++20
+    # Mirrors what the CMake build compiles with. Without these the
+    # distributed code and the CUDA branches are invisible, and a good part of
+    # what is here reads as dead.
+    - -DUSE_CUDA
+    - -DUSE_DISTRIBUTED
+    - -DUSE_KINETO
+    - -DUSE_C10D_NCCL
+    - -DUSE_C10D_GLOO
+    - -DUSE_RPC
+    - -DUSE_TENSORPIPE
+    - -DLIBKINETO_NOROCTRACER
+    - -D_GLIBCXX_USE_CXX11_ABI=1
+    # Outside the repo, so absolute.
+    - -isystem/usr/include/python3.10
+    - -isystem/usr/local/cuda/include
+    - -isystem/usr/local/cuda/targets/x86_64-linux/include
+
+---
+# A .h opened on its own is a C++ header. clangd's default guess is
+# Objective-C++, which is where the objc naming diagnostics on the C ABI
+# headers came from: the check was right about ObjC, the language was wrong.
+# Scoped to headers, because a .cpp parsed as a header loses tweaks that need
+# a matching implementation file.
+If:
+  PathMatch: ".*\\.h"
+CompileFlags:
+  Add: [-xc++-header]
+
+---
+# A subsystem's C++ leaf: lib/<name>/src/*.cpp and lib/<name>/include/*.h. Each
+# sees its own headers, its siblings' C ABIs, and the libraries it binds.
+If:
+  PathMatch:
+    - "lib/[^/]*/src/[^/]*\\.cpp"
+    - "lib/[^/]*/include/[^/]*\\.h"
+CompileFlags:
+  Add:
+    - -I../include
+    - -I../../eprof-torch/include
+    - -I../../eprof-python/include
+    - -I../../eprof-kineto/include
+    - -isystem../../eprof-kineto/libkineto/include
+    - -isystem../../eprof-kineto/libkineto/src
+    - -isystem../../eprof-kineto/libkineto/third_party/fmt/include
+    - -isystem../../../.venv/lib/python3.10/site-packages/torch/include
+    - -isystem../../../.venv/lib/python3.10/site-packages/torch/include/torch/csrc/api/include
+
+---
+# libkineto, including the C ABI added to it. Vendored, and two levels down.
+If:
+  PathMatch: "lib/eprof-kineto/libkineto/(include|src)/[^/]*\\.(h|cpp)"
+CompileFlags:
+  Add:
+    - -I../include
+    - -I../src
+    - -isystem../third_party/fmt/include
+
+# lib/eprof/ has no C++ at all: the orchestration layer is pure Rust. Every C
+# ABI belongs to the subsystem whose C++ half is on the other side of it.

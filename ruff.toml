@@ -1,0 +1,15 @@
+# Linting for the whole repository, so it reaches tests/ and lib/*/eprof.pyi as
+# well as python/. Kept out of python/pyproject.toml for the same reason as
+# pytest.ini: ruff resolves config by walking up from each file, and would never
+# find a config nested inside python/ when checking anything outside it.
+line-length = 100
+extend-exclude = ["lib/*/libkineto", "third_party"]
+
+[lint]
+# ruff's defaults -- pyflakes, plus the pycodestyle errors that are always bugs
+# rather than style -- and the stub rules that govern lib/eprof/magneton_eprof.pyi.
+#
+# Deliberately not the style families. Turning those on reports ~700 findings
+# across code this work never touched, which buries the real ones: this set
+# found an unfinished public function and a dozen dead imports.
+select = ["E4", "E7", "E9", "F", "PYI"]

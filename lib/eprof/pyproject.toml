@@ -1,0 +1,30 @@
+[build-system]
+# `--no-build-isolation` makes pip ignore this list rather than removing the
+# requirement for it, so the documented install and scripts/ae.py both install
+# these into the environment themselves.
+requires = [
+    "maturin>=1.0",     # the build backend
+    "cmake>=3.25.2",    # vendored libkineto is a CMake project; 3.22 is too old
+    "ninja",            # what cmake generates for
+    "pybind11",         # the C++ leaves that reach into python
+    "setuptools>=61",
+    "wheel",
+]
+build-backend = "maturin"
+
+[project]
+# Three names for one thing:
+#   directory      lib/eprof
+#   distribution   magneton-eprof   (what pip installs)
+#   import         magneton_eprof   (what magneton.eprof imports)
+name = "magneton-eprof"
+version = "0.1.0"
+description = "The Rust and C++ half of magneton: libkineto, CUPTI and NVML behind a python module"
+requires-python = ">=3.10"
+# torch is deliberately absent: the extension links the libtorch that will
+# import it, so it is built against whichever one is already installed.
+
+[tool.maturin]
+# maturin would otherwise derive this from the crate, which is named for the
+# directory rather than for what it installs as.
+module-name = "magneton_eprof"
