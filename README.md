@@ -72,6 +72,7 @@ A few of the diagnoses, reproduced in `examples/`:
 ## Getting started
 
 ```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh      # if uv is not installed
 git clone --recursive https://github.com/uw-syfi/Magneton.git && cd Magneton
 uv venv --python 3.10 && source .venv/bin/activate
 uv pip install ./python
@@ -81,8 +82,16 @@ That installs `magneton`, which is pure Python and records, matches and
 compares with nothing but PyTorch.
 
 Energy measurement is an extra, carrying a Rust and C++ extension built against
-CUPTI and NVML. It needs [Rust](https://rustup.rs), a CUDA toolkit and clang 18
-or newer on the machine, and is built in place:
+CUPTI and NVML. It is built in place, so the machine needs Rust, a CUDA toolkit
+and clang 18 or newer. Rust:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source "$HOME/.cargo/env"
+```
+
+For clang 18 and the CUDA toolkit see
+[docs/ARTIFACT_EVALUATION.md](docs/ARTIFACT_EVALUATION.md). Then:
 
 ```bash
 uv pip install torch==2.8.0

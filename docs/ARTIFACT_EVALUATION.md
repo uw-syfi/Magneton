@@ -56,6 +56,16 @@ about it.
 The reported numbers were measured on an NVIDIA H200. Any recent NVIDIA GPU
 should work; absolute figures are specific to the hardware.
 
+### Installing them
+
+uv and Rust:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source "$HOME/.cargo/env"
+```
+
 On Ubuntu 22.04 the compilers are older than this needs, so they come from
 their own repositories:
 
@@ -65,6 +75,9 @@ sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 sudo apt update && sudo apt install -y clang-18 gcc-13 g++-13 libboost-all-dev
 ```
+
+The CUDA toolkit and an NVIDIA driver are assumed to be on the machine already;
+`scripts/ae.py doctor` reports whether it can find them.
 
 g++-13 is there for its libstdc++ rather than to compile anything: clang picks
 up the newest one it finds, and `std::format` needs a recent one. If `clang++-18`
