@@ -1,22 +1,21 @@
 # Artifact evaluation
 
-Clone with submodules -- the profiler's C++ build needs them:
+On a machine with an NVIDIA GPU (Ubuntu 22.04 or 24.04), the whole evaluation
+is three commands:
 
 ```sh
 git clone --recursive https://github.com/uw-syfi/Magneton.git && cd Magneton
-```
-
-If you already cloned without `--recursive`, run `git submodule update --init`.
-
-Everything else is driven by one script:
-
-```sh
+scripts/install_deps.sh
 scripts/ae.py
 ```
 
-That checks the machine, builds the environments the examples need, runs every
-example, and prints a table of what passed. Nothing else has to be installed or
-configured by hand.
+`scripts/install_deps.sh` installs the toolchain the profiler is built with
+(see [What the machine needs](#what-the-machine-needs)); it needs root or sudo,
+and leaves alone anything already installed. `scripts/ae.py` then builds the
+environments the examples need, runs every example, and prints a table of what
+passed. Nothing else has to be installed or configured by hand.
+
+If you already cloned without `--recursive`, run `git submodule update --init`.
 
 If you would rather take it a step at a time:
 
@@ -37,73 +36,23 @@ scripts/ae.py run --example pytorch-141210
 
 ## What the machine needs
 
-`scripts/ae.py doctor` checks all of this and names whatever is missing.
+`scripts/install_deps.sh` installs all of this except the GPU driver, and
+`scripts/install_deps.sh --check` or `scripts/ae.py doctor` reports what is
+missing.
 
 | | |
 |---|---|
-| an NVIDIA GPU | every example profiles CUDA work; there is no CPU-only path |
-| a CUDA toolkit | found via `CUDA_HOME`, `nvcc`, or `/usr/local/cuda` |
-| CUPTI | its headers and libraries, from the toolkit or `nvidia-cuda-cupti`; `EPROF_CUPTI_DIR` overrides where to look |
-| clang 18 or newer | the C++ uses C++20 `std::format` |
-| [uv](https://docs.astral.sh/uv/) | creates the environments |
+| an NVIDIA GPU and driver | every example profiles CUDA work; there is no CPU-only path. In a container, start it with `--gpus all` |
+| a CUDA toolkit with CUPTI | found via `CUDA_HOME`, `nvcc`, or `/usr/local/cuda`; `EPROF_CUPTI_DIR` overrides where CUPTI is looked for |
+| clang 18 or newer | the C++ uses C++20 `std::format`; if `clang++-18` is not the default compiler, point `CXX` at it |
+| libstdc++ 13 or newer | from g++-13; clang uses the newest libstdc++ it finds, and `std::format` needs a recent one |
+| boost headers | libkineto uses `boost::stacktrace` |
 | [cargo](https://rustup.rs) | builds the profiler |
-| a TOML parser | python 3.11+, or `pip install tomli`, to read `examples/manifest.toml` |
+| [uv](https://docs.astral.sh/uv/) | creates the environments, and the Python 3.11+ `scripts/ae.py` runs under |
 | ~60 GiB disk | mostly the frameworks: vLLM, TensorFlow and Megatron are large |
-
-`doctor` runs without the TOML parser, so it can be the thing that tells you
-about it.
 
 The reported numbers were measured on an NVIDIA H200. Any recent NVIDIA GPU
 should work; absolute figures are specific to the hardware.
-
-### Installing them
-
-uv and Rust:
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source "$HOME/.cargo/env"
-```
-
-On Ubuntu 22.04 the compilers are older than this needs, so they come from
-their own repositories:
-
-```bash
-wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main"
-sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-sudo apt update && sudo apt install -y clang-18 gcc-13 g++-13 libboost-all-dev
-```
-
-The CUDA toolkit and an NVIDIA driver are assumed to be on the machine already;
-`scripts/ae.py doctor` reports whether it can find them.
-
-g++-13 is there for its libstdc++ rather than to compile anything: clang picks
-up the newest one it finds, and `std::format` needs a recent one. If `clang++-18`
-is not the default compiler, point `CXX` at it.
-
-Only the energy extension needs any of this. `pip install ./python` installs
-magneton alone, which records, matches and compares with nothing but torch. The
-extension is built from `lib/eprof` in this checkout:
-
-```sh
-uv venv --python 3.10 && source .venv/bin/activate
-uv pip install torch==2.8.0
-uv pip install maturin setuptools wheel cmake ninja pybind11
-EPROF_USE_PREBUILT=0 uv pip install --no-build-isolation './python[energy]'
-```
-
-Both preceding lines are required. The extension links the libtorch that will
-import it, so torch must be installed first and the build cannot be isolated;
-and because it cannot be isolated, pip installs no build backend either, so the
-build dependencies have to be present already. They are declared in
-`lib/eprof/pyproject.toml` under `[build-system] requires`, which is the list
-`scripts/ae.py` installs into each environment it makes.
-
-Pin torch to the supported range, `torch>=2.7,<2.11`. The build links the CUPTI
-that torch's `nvidia-cuda-cupti` dependency provides; outside that range no such
-wheel is available and the extension cannot collect kernels.
 
 ## What it costs
 

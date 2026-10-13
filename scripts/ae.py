@@ -192,7 +192,9 @@ def doctor() -> bool:
     check("disk space", free_gb >= 60, f"{free_gb} GiB free; all the environments need roughly 60")
 
     print()
-    print("OK." if ok else "Something above is missing; the runs that need it will fail.")
+    print("OK." if ok else
+          "Something above is missing; the runs that need it will fail.\n"
+          "scripts/install_deps.sh installs everything here except the GPU driver.")
     return ok
 
 
@@ -479,7 +481,7 @@ def main() -> int:
                 print(f"    {e.name:26} {e.dir}/{e.script}")
         return 0
 
-    if args.stage == "all" and not doctor() and not args.skip_doctor:
+    if args.stage in ("all", "build") and not args.skip_doctor and not doctor():
         # Stop rather than fail later, further from the cause.
         print("\nNothing above was run. Fix what failed, or --skip-doctor to try anyway.")
         return 1

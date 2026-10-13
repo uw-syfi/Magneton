@@ -72,40 +72,31 @@ A few of the diagnoses, reproduced in `examples/`:
 ## Getting started
 
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh      # if uv is not installed
 git clone --recursive https://github.com/uw-syfi/Magneton.git && cd Magneton
+scripts/install_deps.sh
+```
+
+`scripts/install_deps.sh` checks for everything outside Python that the energy
+extension needs to build -- clang 18, libstdc++ 13, the CUDA toolkit with
+CUPTI, Rust and uv -- and installs whatever is missing (Ubuntu 22.04 or 24.04,
+as root or with sudo). `scripts/install_deps.sh --check` only reports.
+
+Then, in a virtualenv:
+
+```bash
 uv venv --python 3.10 && source .venv/bin/activate
-uv pip install ./python
-```
-
-That installs `magneton`, which is pure Python and records, matches and
-compares with nothing but PyTorch.
-
-Energy measurement is an extra, carrying a Rust and C++ extension built against
-CUPTI and NVML. It is built in place, so the machine needs Rust, a CUDA toolkit
-and clang 18 or newer. Rust:
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source "$HOME/.cargo/env"
-```
-
-For clang 18 and the CUDA toolkit see
-[docs/ARTIFACT_EVALUATION.md](docs/ARTIFACT_EVALUATION.md). Then:
-
-```bash
 uv pip install torch==2.8.0
 uv pip install maturin setuptools wheel cmake ninja pybind11
 EPROF_USE_PREBUILT=0 uv pip install --no-build-isolation './python[energy]'
 ```
 
 Install torch first and pin it: the extension links the torch that will import
-it, which is also why the build cannot be isolated. `magneton` requires
-`torch>=2.7,<2.11`.
+it, which is also why the build cannot be isolated, and why its build
+dependencies are installed by hand. `magneton` requires `torch>=2.7,<2.11`.
 
-`scripts/ae.py` does all of this for you, and `scripts/ae.py doctor` checks a
-machine for the toolchain first. See
-[docs/ARTIFACT_EVALUATION.md](docs/ARTIFACT_EVALUATION.md).
+Without energy measurement, `uv pip install ./python` is enough: `magneton`
+itself is pure Python, and records, matches and compares with nothing but
+PyTorch.
 
 ### Comparing two systems
 
@@ -143,7 +134,7 @@ TensorFlow. Their requirements contradict each other, so one script builds an
 environment per group and runs everything:
 
 ```bash
-scripts/ae.py
+scripts/install_deps.sh && scripts/ae.py
 ```
 
 Roughly 30–45 minutes end to end. See
